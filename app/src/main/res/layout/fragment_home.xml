@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/Back_primary"
+    tools:context=".view.HomeFragment">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="132dp"
+        android:background="@color/Back_primary">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsing_toolbar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+            app:expandedTitleGravity="top"
+            app:expandedTitleMarginStart="60dp"
+            app:expandedTitleMarginTop="50dp"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:orientation="horizontal"
+                app:layout_collapseMode="parallax">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="60dp"
+                    android:layout_marginBottom="16dp"
+                    android:text="@string/done"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/task_cnt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="0dp"
+                    android:textSize="16sp"
+                    tools:text="5" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/visibility_selector"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="end|bottom"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_visibility_on" />
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:title="Мои дела"
+                app:titleMarginStart="16dp">
+
+            </androidx.appcompat.widget.Toolbar>
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/Back_primary"
+        android:paddingBottom="28dp"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:background="@color/Back_secondary"
+            app:cardCornerRadius="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/tasks_rv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                tools:listitem="@layout/todo_item" />
+
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="40dp"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="@color/Blue"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@color/white" />
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/imp_no"
+        android:title="@string/No" />
+    <item
+        android:id="@+id/imp_low"
+        android:title="@string/low" />
+    <item
+        android:id="@+id/imp_high"
+        android:icon="@drawable/ic_high_imp"
+        android:title="@string/high" />
+</menu>

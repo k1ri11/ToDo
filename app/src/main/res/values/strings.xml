@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">ToDo</string>
+    <string name="save">СОХРАНИТЬ</string>
+    <string name="todo_placeholder">Что надо сделать…</string>
+    <string name="importance">Важность</string>
+    <string name="deadline">Сделать до</string>
+    <string name="delete">Удалить</string>
+    <string name="done">Выполнено -</string>
+    <string name="No">Нет</string>
+    <string name="low">Низкий</string>
+    <string name="high">Высокий</string>
 </resources>
