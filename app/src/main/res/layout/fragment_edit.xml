@@ -21,8 +21,6 @@
             app:menu="@menu/edit_task_menu"
             app:navigationIcon="@drawable/ic_close"
             app:navigationIconTint="@color/black" />
-        <!--        todo покрасить сохранить-->
-
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -131,7 +129,7 @@
                     android:layout_alignStart="@+id/deadline_title"
                     android:textColor="@color/Blue"
                     android:textSize="14sp"
-                    android:visibility="gone"
+                    android:visibility="invisible"
                     tools:text="30.07.2022"
                     tools:visibility="visible" />
 

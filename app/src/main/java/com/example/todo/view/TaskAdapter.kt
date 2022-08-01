@@ -8,7 +8,10 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todo.R
 import com.example.todo.databinding.TodoItemBinding
+import com.example.todo.model.Importance
 import com.example.todo.model.ToDoItem
+import java.text.SimpleDateFormat
+import java.util.*
 
 class DiffUtilTaskCallback(
     private var oldList: List<ToDoItem>,
@@ -67,24 +70,23 @@ class TaskAdapter(private val listener: OnItemClickListener) :
         holder.binding.apply {
             itemCb.isChecked = currentItem.done
             when (currentItem.importance) {
-                "low" -> {
+                Importance.Low -> {
                     itemImportance.setImageResource(R.drawable.ic_low_imp)
                     itemImportance.visibility = View.VISIBLE
                 }
-                "high" -> {
+                Importance.High -> {
                     itemImportance.setImageResource(R.drawable.ic_high_imp)
                     itemImportance.visibility = View.VISIBLE
-//                    if (!itemCb.isChecked){
-//                        itemCb.setBackgroundColor(ContextCompat.getColor()) // todo узнать про цвета
-//                    }
                 }
-                else -> itemImportance.visibility = View.GONE
+                Importance.Basic -> itemImportance.visibility = View.GONE
             }
             itemText.text = currentItem.text
-            if (currentItem.deadLine.isEmpty()) {
+            if (currentItem.deadLine == null) {
                 itemDate.visibility = View.GONE
             } else {
-                itemDate.text = currentItem.deadLine
+                val format = "dd.MM.yyyy"
+                val dateFormat = SimpleDateFormat(format, Locale.getDefault())
+                itemDate.text = dateFormat.format(currentItem.deadLine!!)
                 itemDate.visibility = View.VISIBLE
             }
         }

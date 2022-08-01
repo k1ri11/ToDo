@@ -5,12 +5,12 @@ import java.util.*
 data class ToDoItem(
     val id: UUID,
     var text: String,
-    var importance: String,
-    var deadLine: String = "",
+    var importance: Importance,
+    var deadLine: Date? = null,
     var done: Boolean,
-    var color: Int,
-    val created_at: String,
-    var changed_at: String = "",
+    var color: Int? = null,
+    val created_at: Date,
+    var changed_at: Date,
 )
 
 
