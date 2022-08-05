@@ -1,13 +1,14 @@
 package com.example.todo.viewmodel
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.todo.model.Importance
 import com.example.todo.model.ToDoItem
 import com.example.todo.model.TodoItemReq
 import com.example.todo.repository.TodoItemsRepository
+import kotlinx.coroutines.*
 import java.util.*
 
 class ToDoViewModel(
@@ -16,47 +17,48 @@ class ToDoViewModel(
 ) : AndroidViewModel(app) {
     val allTasks = MutableLiveData<List<ToDoItem>>()
     val singleTask = MutableLiveData<ToDoItem>()
-    var doneVisibility = false
+    var doneIsInvisible = false
 
-    fun getAllTasks() {
-        allTasks.value = repository.getAllTasks().map { it.toToDoItem() }
+    fun getAllTasks() = viewModelScope.launch(Dispatchers.IO) {
+        val tmpTasks = repository.getAllTasks()
+        withContext(Dispatchers.Main) {
+            allTasks.value = tmpTasks
+        }
     }
 
-    fun getSingleTask(id: UUID) {
-        singleTask.value = repository.getSingleTask(id)?.toToDoItem()
+    fun getSingleTask(id: UUID) = viewModelScope.launch(Dispatchers.IO) {
+        val tmpTasks = repository.getSingleTask(id)
+        tmpTasks?.let {
+            withContext(Dispatchers.Main) {
+                singleTask.value = it
+            }
+        }
     }
 
-    fun deleteTask(id: UUID) {
+    fun deleteTask(id: UUID) = viewModelScope.launch(Dispatchers.IO) {
         repository.deleteTask(id)
     }
 
-    fun saveTask(task: ToDoItem) {
-        val taskReq = TodoItemReq(
-            id = task.id,
-            text = task.text,
-            importance = task.importance,
-            deadLine = task.deadLine?.time,
-            done = task.done,
-            color = "#000000",
-            created_at = task.created_at.time,
-            changed_at = task.changed_at.time,
-            last_updated_by = "device"
-        )
-        repository.saveTask(taskReq)
+    fun saveTask(task: ToDoItem) = viewModelScope.launch(Dispatchers.IO) {
+        repository.saveTask(task)
     }
 
-    fun createEmptyTask() {
-        val emptyTask = TodoItemReq(
-            id = UUID.randomUUID(),
+    fun createEmptyTask(taskId: UUID): ToDoItem {
+        val newTask = ToDoItem(
+            id = taskId,
             text = "",
             importance = Importance.Basic,
             deadLine = null,
             done = false,
-            color = "#000000",
-            created_at = System.currentTimeMillis(),
-            changed_at = System.currentTimeMillis(),
-            last_updated_by = "device"
+            color = 0,
+            created_at = Date(System.currentTimeMillis()),
+            changed_at = Date(System.currentTimeMillis()),
         )
-        singleTask.value = emptyTask.toToDoItem()
+        singleTask.value = newTask
+        return newTask
+    }
+
+    fun saveTaskList(taskList: List<ToDoItem>) = viewModelScope.launch(Dispatchers.IO) {
+        repository.saveTaskList(taskList)
     }
 }

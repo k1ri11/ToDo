@@ -3,7 +3,6 @@ package com.example.todo.view
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todo.R
@@ -30,7 +29,7 @@ class DiffUtilTaskCallback(
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
         val oldItem = oldList[oldItemPosition]
         val newItem = newList[newItemPosition]
-        return oldItem.id == newItem.id
+        return oldItem == newItem
     }
 }
 
@@ -39,6 +38,7 @@ class TaskAdapter(private val listener: OnItemClickListener) :
 
     interface OnItemClickListener {
         fun onItemClick(position: Int)
+        fun onCheckBoxClick(position: Int)
     }
 
     var toDoList: List<ToDoItem> = emptyList()
@@ -52,11 +52,15 @@ class TaskAdapter(private val listener: OnItemClickListener) :
     inner class TaskViewHolder(val binding: TodoItemBinding) :
         RecyclerView.ViewHolder(binding.root), View.OnClickListener {
         init {
-            binding.root.setOnClickListener(this)
+            binding.itemTextWrapper.setOnClickListener(this)
+            binding.itemCb.setOnClickListener(this)
         }
 
-        override fun onClick(p0: View?) {
-            listener.onItemClick(adapterPosition)
+        override fun onClick(view: View?) {
+            when(view?.id){
+                binding.itemCb.id -> listener.onCheckBoxClick(adapterPosition)
+                binding.itemTextWrapper.id ->listener.onItemClick(adapterPosition)
+            }
         }
     }
 
@@ -67,6 +71,14 @@ class TaskAdapter(private val listener: OnItemClickListener) :
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
         val currentItem = toDoList[position]
+        bind(currentItem, holder)
+    }
+
+    override fun getItemCount(): Int {
+        return toDoList.size
+    }
+
+    private fun bind(currentItem: ToDoItem, holder: TaskViewHolder) {
         holder.binding.apply {
             itemCb.isChecked = currentItem.done
             when (currentItem.importance) {
@@ -90,9 +102,5 @@ class TaskAdapter(private val listener: OnItemClickListener) :
                 itemDate.visibility = View.VISIBLE
             }
         }
-    }
-
-    override fun getItemCount(): Int {
-        return toDoList.size
     }
 }
