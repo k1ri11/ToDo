@@ -1,7 +1,6 @@
 package com.example.todo.view
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,13 +10,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.todo.MainActivity
 import com.example.todo.R
+import com.example.todo.data.item.ToDoItem
 import com.example.todo.databinding.FragmentHomeBinding
-import com.example.todo.model.ToDoItem
+import com.example.todo.utils.Resource
 import com.example.todo.viewmodel.ToDoViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import java.util.*
 
 class HomeFragment : Fragment(), TaskAdapter.OnItemClickListener {
@@ -28,9 +25,11 @@ class HomeFragment : Fragment(), TaskAdapter.OnItemClickListener {
     private lateinit var viewModel: ToDoViewModel
     private val adapter = TaskAdapter(this)
     private var doneCnt = 0
+    var isRefreshing = false
 
-    private var filteredTasks = mutableListOf<ToDoItem>()
-    private var tasksList = mutableListOf<ToDoItem>()
+    private var filteredTasks = emptyList<ToDoItem>()
+    private var tasksList = emptyList<ToDoItem>()
+    private var getAllTasksJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,26 +43,68 @@ class HomeFragment : Fragment(), TaskAdapter.OnItemClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val getAllTasksJob = viewModel.getAllTasks()
+        getAllTasksJob = viewModel.getAllTasks()
+        viewModel.filteredTasks.observe(viewLifecycleOwner, androidx.lifecycle.Observer { response ->
+                when (response) {
+                    is Resource.Success -> {
+                        filteredTasks = response.data!!
+                    }
+                    is Resource.Error -> {
+                        response.message?.let { message ->
+                            Toast.makeText(activity, "Ошибка: $message", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    is Resource.Loading -> {
+                    }
+                }
+        })
 
-        viewModel.allTasks.observe(viewLifecycleOwner, androidx.lifecycle.Observer { tasks ->
-            tasksList = tasks.toMutableList()
-            filteredTasks = tasks.filter { !it.done }.toMutableList()
-            if (viewModel.doneIsInvisible) adapter.toDoList = filteredTasks
-            else adapter.toDoList = tasksList
-
-            doneCnt = tasksList.count { it.done }
-            binding.taskCnt.text = doneCnt.toString()
+        viewModel.allTasks.observe(viewLifecycleOwner, androidx.lifecycle.Observer { response ->
+            handleAllTasksResponse(response)
         })
 
         binding.fab.setOnClickListener {
-            getAllTasksJob.cancel()
-            saveTaskList(tasksList)
+            getAllTasksJob?.cancel()
             val action = HomeFragmentDirections.homeFrToEditFr(UUID.randomUUID(), isNew = true)
             findNavController().navigate(action)
         }
 
+        binding.refresh.setOnRefreshListener {
+            if (!isRefreshing){
+                getAllTasksJob = viewModel.getAllTasks()
+            }
+        }
+
         setupUI()
+    }
+
+    private fun handleAllTasksResponse(response: Resource<List<ToDoItem>>) {
+        when (response) {
+            is Resource.Success -> {
+                response.data?.let {
+                    tasksList = it
+                    if (viewModel.doneIsInvisible) adapter.toDoList = filteredTasks
+                    else adapter.toDoList = tasksList
+
+                    doneCnt = tasksList.count { it.done }
+                    binding.taskCnt.text = doneCnt.toString()
+                    binding.refresh.isRefreshing = false
+                    isRefreshing = false
+                }
+            }
+            is Resource.Error -> {
+                response.message?.let { message ->
+                    Toast.makeText(activity, "Ошибка: $message проведите вниз, чтобы обновить", Toast.LENGTH_LONG)
+                        .show()
+                    binding.refresh.isRefreshing = false
+                    isRefreshing = false
+                }
+            }
+            is Resource.Loading -> {
+                binding.refresh.isRefreshing = true
+                isRefreshing = true
+            }
+        }
     }
 
     private fun setupUI() {
@@ -81,7 +122,6 @@ class HomeFragment : Fragment(), TaskAdapter.OnItemClickListener {
     }
 
     private fun setVisibility(tasks: List<ToDoItem>) {
-        Log.d("TAG", "onViewCreated: visibility ${viewModel.doneIsInvisible}")
         if (viewModel.doneIsInvisible) {
             binding.visibilitySelector.setImageResource(R.drawable.ic_visibility_off)
             adapter.toDoList = filteredTasks
@@ -94,8 +134,8 @@ class HomeFragment : Fragment(), TaskAdapter.OnItemClickListener {
     override fun onItemClick(position: Int) {
         val currentItem = adapter.toDoList[position]
         val taskId = currentItem.id
-        saveTaskList(tasksList)
-        findNavController().navigate(HomeFragmentDirections.homeFrToEditFr(taskId, isNew = false))
+        val action = HomeFragmentDirections.homeFrToEditFr(taskId, isNew = false)
+        findNavController().navigate(action)
     }
 
     private fun saveTaskList(tasksList: List<ToDoItem>) {
@@ -108,14 +148,17 @@ class HomeFragment : Fragment(), TaskAdapter.OnItemClickListener {
         else doneCnt += 1
         binding.taskCnt.text = doneCnt.toString()
 
-        val index = tasksList.indexOf(currentItem)
-        tasksList[index].done = !tasksList[index].done
-        filteredTasks = tasksList.filter { !it.done }.toMutableList()
+        viewModel.changeItemDone(currentItem)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveTaskList(tasksList)
     }
 
 }

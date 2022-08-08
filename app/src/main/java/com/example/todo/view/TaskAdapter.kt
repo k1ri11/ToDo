@@ -7,8 +7,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todo.R
 import com.example.todo.databinding.TodoItemBinding
-import com.example.todo.model.Importance
-import com.example.todo.model.ToDoItem
+import com.example.todo.data.Importance
+import com.example.todo.data.item.ToDoItem
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,11 +55,36 @@ class TaskAdapter(private val listener: OnItemClickListener) :
             binding.itemTextWrapper.setOnClickListener(this)
             binding.itemCb.setOnClickListener(this)
         }
-
         override fun onClick(view: View?) {
             when(view?.id){
                 binding.itemCb.id -> listener.onCheckBoxClick(adapterPosition)
                 binding.itemTextWrapper.id ->listener.onItemClick(adapterPosition)
+            }
+        }
+
+        fun bind(currentItem: ToDoItem, holder: TaskViewHolder) {
+            holder.binding.apply {
+                itemCb.isChecked = currentItem.done
+                when (currentItem.importance) {
+                    Importance.Low -> {
+                        itemImportance.setImageResource(R.drawable.ic_low_imp)
+                        itemImportance.visibility = View.VISIBLE
+                    }
+                    Importance.High -> {
+                        itemImportance.setImageResource(R.drawable.ic_high_imp)
+                        itemImportance.visibility = View.VISIBLE
+                    }
+                    Importance.Basic -> itemImportance.visibility = View.GONE
+                }
+                itemText.text = currentItem.text
+                if (currentItem.deadLine == null) {
+                    itemDate.visibility = View.GONE
+                } else {
+                    val format = "dd.MM.yyyy"
+                    val dateFormat = SimpleDateFormat(format, Locale.getDefault())
+                    itemDate.text = dateFormat.format(currentItem.deadLine!!)
+                    itemDate.visibility = View.VISIBLE
+                }
             }
         }
     }
@@ -71,36 +96,11 @@ class TaskAdapter(private val listener: OnItemClickListener) :
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
         val currentItem = toDoList[position]
-        bind(currentItem, holder)
+           holder.bind(currentItem, holder)
     }
 
     override fun getItemCount(): Int {
         return toDoList.size
     }
 
-    private fun bind(currentItem: ToDoItem, holder: TaskViewHolder) {
-        holder.binding.apply {
-            itemCb.isChecked = currentItem.done
-            when (currentItem.importance) {
-                Importance.Low -> {
-                    itemImportance.setImageResource(R.drawable.ic_low_imp)
-                    itemImportance.visibility = View.VISIBLE
-                }
-                Importance.High -> {
-                    itemImportance.setImageResource(R.drawable.ic_high_imp)
-                    itemImportance.visibility = View.VISIBLE
-                }
-                Importance.Basic -> itemImportance.visibility = View.GONE
-            }
-            itemText.text = currentItem.text
-            if (currentItem.deadLine == null) {
-                itemDate.visibility = View.GONE
-            } else {
-                val format = "dd.MM.yyyy"
-                val dateFormat = SimpleDateFormat(format, Locale.getDefault())
-                itemDate.text = dateFormat.format(currentItem.deadLine!!)
-                itemDate.visibility = View.VISIBLE
-            }
-        }
-    }
 }
