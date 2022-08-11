@@ -9,7 +9,7 @@ import android.widget.EditText
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.example.todo.databinding.ActivityMainBinding
-import com.example.todo.repository.TodoItemsRepository
+import com.example.todo.data.network.repository.TodoItemsRepository
 import com.example.todo.viewmodel.ToDoViewModel
 
 

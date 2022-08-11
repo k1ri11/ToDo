@@ -1,5 +1,6 @@
-package com.example.todo.model
+package com.example.todo.data.item
 
+import com.example.todo.data.Importance
 import java.util.*
 
 data class ToDoItem(
@@ -9,8 +10,8 @@ data class ToDoItem(
     var deadLine: Date? = null,
     var done: Boolean,
     var color: Int? = null,
-    val created_at: Date,
-    var changed_at: Date,
+    val createdAt: Date,
+    var changedAt: Date,
 )
 
 
