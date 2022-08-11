@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/Back_primary"
     android:orientation="vertical"
-    tools:context=".view.EditFragment">
+    tools:context=".ui.view.fragments.EditFragment">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
