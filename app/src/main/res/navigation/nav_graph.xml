@@ -20,6 +20,14 @@
         tools:layout="@layout/fragment_edit" >
         <action
             android:id="@+id/editFr_to_homeFr"
-            app:destination="@id/homeFragment" />
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
+        <argument
+            android:name="taskId"
+            app:argType="java.util.UUID" />
+        <argument
+            android:name="isNew"
+            app:argType="boolean" />
     </fragment>
 </navigation>

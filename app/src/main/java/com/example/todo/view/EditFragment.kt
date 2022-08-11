@@ -2,12 +2,15 @@ package com.example.todo.view
 
 import android.app.DatePickerDialog
 import android.os.Bundle
-import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.example.todo.MainActivity
 import com.example.todo.R
 import com.example.todo.databinding.FragmentEditBinding
@@ -15,6 +18,10 @@ import com.example.todo.model.Importance
 import com.example.todo.model.ToDoItem
 import com.example.todo.viewmodel.ToDoViewModel
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,10 +32,12 @@ class EditFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var viewModel: ToDoViewModel
     private lateinit var task: ToDoItem
+    private val args by navArgs<EditFragmentArgs>()
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentEditBinding.inflate(inflater, container, false)
         viewModel = (activity as MainActivity).viewModel
@@ -37,7 +46,12 @@ class EditFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.singleTask.observe(viewLifecycleOwner, androidx.lifecycle.Observer{
+        var getTaskJob: Job? = null
+        val taskId = args.taskId
+        if (args.isNew) task = viewModel.createEmptyTask(taskId)
+        else getTaskJob = viewModel.getSingleTask(taskId)
+
+        viewModel.singleTask.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             task = it
             setupUI()
         })
@@ -46,15 +60,15 @@ class EditFragment : Fragment() {
         val popupMenu = PopupMenu(requireContext(), binding.importanceSection)
         popupMenu.inflate(R.menu.popup_menu)
 
-        setupListeners(toolbar, popupMenu)
+        setupListeners(toolbar, popupMenu, getTaskJob)
     }
 
 
     private fun setupUI() {
-        if (task.text.isNotEmpty()) binding.editText.setText(
-            task.text,
-            TextView.BufferType.EDITABLE
-        )
+        if (task.text.isNotEmpty()) {
+            binding.editText.setText(task.text, TextView.BufferType.EDITABLE)
+            binding.deleteSection.visibility = View.VISIBLE
+        }
         when (task.importance) {
             is Importance.Low -> binding.importance.text = "Низкий"
             is Importance.High -> {
@@ -71,19 +85,25 @@ class EditFragment : Fragment() {
         }
     }
 
-    private fun setupListeners(toolbar: MaterialToolbar, popupMenu: PopupMenu) {
+    private fun setupListeners(toolbar: MaterialToolbar, popupMenu: PopupMenu, getTaskJob: Job?) {
         toolbar.setOnMenuItemClickListener { menuItem ->
             if (menuItem.itemId == R.id.save) {
-                task.text = binding.editText.text.toString()
-                task.changed_at = Date(System.currentTimeMillis())
-                Log.d("TAG", "setupListeners: task $task")
-                viewModel.saveTask(task)
-                findNavController().navigate(R.id.editFr_to_homeFr)
+                val inputText = binding.editText.text.toString()
+                if (inputText.isNotBlank()) {
+                    task.text = inputText
+                    task.changed_at = Date(System.currentTimeMillis())
+                    viewModel.saveTask(task)
+                    findNavController().navigate(R.id.editFr_to_homeFr)
+                } else {
+                    Toast.makeText(requireContext(), "Введите текс задачи", Toast.LENGTH_SHORT)
+                        .show()
+                }
             }
             true
         }
 
         toolbar.setNavigationOnClickListener {
+            getTaskJob?.cancel()
             findNavController().navigate(R.id.editFr_to_homeFr)
         }
 
