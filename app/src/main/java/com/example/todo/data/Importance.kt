@@ -1,4 +1,4 @@
-package com.example.todo.model
+package com.example.todo.data
 
 sealed class Importance() {
     object Low: Importance()

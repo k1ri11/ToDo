@@ -13,15 +13,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.todo.MainActivity
 import com.example.todo.R
+import com.example.todo.data.Importance
+import com.example.todo.data.item.ToDoItem
 import com.example.todo.databinding.FragmentEditBinding
-import com.example.todo.model.Importance
-import com.example.todo.model.ToDoItem
+import com.example.todo.utils.Resource
 import com.example.todo.viewmodel.ToDoViewModel
 import com.google.android.material.appbar.MaterialToolbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,6 +31,9 @@ class EditFragment : Fragment() {
     private lateinit var viewModel: ToDoViewModel
     private lateinit var task: ToDoItem
     private val args by navArgs<EditFragmentArgs>()
+    private var isNewTask = false
+    var getTaskJob: Job? = null
+    private var isLoading = false
 
 
     override fun onCreateView(
@@ -46,21 +47,45 @@ class EditFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        var getTaskJob: Job? = null
         val taskId = args.taskId
-        if (args.isNew) task = viewModel.createEmptyTask(taskId)
-        else getTaskJob = viewModel.getSingleTask(taskId)
-
-        viewModel.singleTask.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            task = it
-            setupUI()
-        })
+        if (args.isNew) {
+            task = viewModel.createEmptyTask(taskId)
+            isNewTask = true
+        } else getTaskJob = viewModel.getTask(taskId)
 
         val toolbar = binding.toolbar
         val popupMenu = PopupMenu(requireContext(), binding.importanceSection)
         popupMenu.inflate(R.menu.popup_menu)
 
-        setupListeners(toolbar, popupMenu, getTaskJob)
+        viewModel.singleTask.observe(viewLifecycleOwner, androidx.lifecycle.Observer { response ->
+            when (response) {
+                is Resource.Success -> {
+                    isLoading = false
+                    binding.prBar.visibility = View.GONE
+                    response.data?.let { task = it
+                        setupListeners(toolbar, popupMenu)
+                        setupUI()
+                    }
+                }
+                is Resource.Error -> {
+                    isLoading = false
+                    binding.prBar.visibility = View.GONE
+                    response.message?.let { message ->
+                        Toast.makeText(activity,
+                            "Ошибка: $message", Toast.LENGTH_LONG).show()
+                    }
+                }
+                is Resource.Loading -> {
+                    isLoading = true
+                    binding.prBar.visibility = View.VISIBLE
+                }
+            }
+        })
+
+        toolbar.setNavigationOnClickListener {
+            getTaskJob?.cancel()
+            findNavController().navigate(R.id.editFr_to_homeFr)
+        }
     }
 
 
@@ -85,28 +110,23 @@ class EditFragment : Fragment() {
         }
     }
 
-    private fun setupListeners(toolbar: MaterialToolbar, popupMenu: PopupMenu, getTaskJob: Job?) {
+    private fun setupListeners(toolbar: MaterialToolbar, popupMenu: PopupMenu) {
         toolbar.setOnMenuItemClickListener { menuItem ->
             if (menuItem.itemId == R.id.save) {
                 val inputText = binding.editText.text.toString()
                 if (inputText.isNotBlank()) {
                     task.text = inputText
-                    task.changed_at = Date(System.currentTimeMillis())
-                    viewModel.saveTask(task)
+                    task.changedAt = Date(System.currentTimeMillis())
+                    if (isNewTask) viewModel.addTask(task)
+                    else viewModel.updateTask(task)
                     findNavController().navigate(R.id.editFr_to_homeFr)
                 } else {
-                    Toast.makeText(requireContext(), "Введите текс задачи", Toast.LENGTH_SHORT)
+                    Toast.makeText(requireContext(), "Введите текст задачи", Toast.LENGTH_SHORT)
                         .show()
                 }
             }
             true
         }
-
-        toolbar.setNavigationOnClickListener {
-            getTaskJob?.cancel()
-            findNavController().navigate(R.id.editFr_to_homeFr)
-        }
-
         binding.deleteSection.setOnClickListener {
             viewModel.deleteTask(task.id)
             findNavController().navigate(R.id.editFr_to_homeFr)
