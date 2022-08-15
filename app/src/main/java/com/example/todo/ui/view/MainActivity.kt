@@ -11,16 +11,29 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import com.example.todo.ToDoApp
 import com.example.todo.databinding.ActivityMainBinding
+import com.example.todo.ioc.di.ActivityComponent
+import com.example.todo.ui.stateholders.ToDoViewModel
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    lateinit var activityComponent: ActivityComponent
     var isConnected: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        val appComponent = ToDoApp.get(applicationContext).appComponent
+
+        val viewModel: ToDoViewModel by viewModels {
+            appComponent.getViewModelFactory()
+        }
+        activityComponent =
+            appComponent.activityComponent().create(viewModel)
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

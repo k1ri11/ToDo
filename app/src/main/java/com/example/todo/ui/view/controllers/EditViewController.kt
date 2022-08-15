@@ -12,14 +12,17 @@ import com.example.todo.R
 import com.example.todo.data.model.Importance
 import com.example.todo.databinding.FragmentEditBinding
 import com.example.todo.domain.model.ToDoItem
+import com.example.todo.ioc.di.viewcomponents.FragmentViewScope
 import com.example.todo.ui.stateholders.ToDoViewModel
 import com.example.todo.utils.Resource
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.Job
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-class EditViewController(
+@FragmentViewScope
+class EditViewController @Inject constructor(
     private val fragment: Fragment,
     private val binding: FragmentEditBinding,
     private val viewLifecycleOwner: LifecycleOwner,
@@ -88,32 +91,43 @@ class EditViewController(
     }
 
     private fun updateUI() {
-//        todo разобраться с новой задачей
-        if (task.text.isNotEmpty()) {
-            binding.editText.setText(task.text, TextView.BufferType.EDITABLE)
-            binding.deleteSection.visibility = View.VISIBLE
-        }
+        binding.editText.setText(task.text, TextView.BufferType.EDITABLE)
+        if (!isNewTask) binding.deleteSection.visibility = View.VISIBLE
+
         updateImportanceSection()
         updateDeadlineSection()
     }
 
     private fun updateDeadlineSection() {
-        task.deadLine?.let {
+        val deadLine = task.deadLine
+        if (deadLine != null) {
             binding.swich.isChecked = true
-            binding.deadlineDate.text = dateToString(it)
+            binding.deadlineDate.text = dateToString(deadLine)
             binding.deadlineDate.visibility = View.VISIBLE
+        } else {
+            binding.swich.isChecked = false
+            binding.deadlineDate.text = ""
+            binding.deadlineDate.visibility = View.INVISIBLE
         }
     }
 
     private fun updateImportanceSection() {
         when (task.importance) {
-            is Importance.Low -> binding.importance.text = "Низкий"
+            is Importance.Low -> {
+                binding.importance.text = "Низкий"
+                binding.importance.setTextColor(fragment.requireContext().getColor(R.color.black))
+                binding.importanceIc.visibility = View.INVISIBLE
+            }
             is Importance.High -> {
                 binding.importance.text = "Высокий"
                 binding.importance.setTextColor(fragment.requireContext().getColor(R.color.Red))
                 binding.importanceIc.visibility = View.VISIBLE
             }
-            is Importance.Basic -> binding.importance.text = "Нет"
+            is Importance.Basic -> {
+                binding.importance.text = "Нет"
+                binding.importance.setTextColor(fragment.requireContext().getColor(R.color.black))
+                binding.importanceIc.visibility = View.INVISIBLE
+            }
         }
     }
 
@@ -123,12 +137,11 @@ class EditViewController(
         setupPopupListener(popupMenu)
         setupDatePicker()
         setupDeleteListener()
-
     }
 
     private fun setupDeleteListener() {
         binding.deleteSection.setOnClickListener {
-            viewModel.deleteTask(task.id)
+            deleteTask()
             findNavController(fragment).navigate(R.id.editFr_to_homeFr)
         }
     }
@@ -236,12 +249,16 @@ class EditViewController(
         return dateFormat.format(date)
     }
 
-    fun saveTask() {
+    private fun saveTask() {
         if (isNewTask) viewModel.addTask(task)
         else viewModel.updateTask(task)
     }
 
     fun cancelGetSingleTaskJob() {
         getTaskJob?.cancel()
+    }
+
+    private fun deleteTask() {
+        viewModel.deleteTask(task.id)
     }
 }

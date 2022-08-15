@@ -7,13 +7,15 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todo.databinding.TodoItemBinding
 import com.example.todo.domain.model.ToDoItem
+import com.example.todo.ioc.di.fragments.FragmentScope
 import com.example.todo.ui.stateholders.ToDoViewModel
+import javax.inject.Inject
 
-
-class TaskAdapter(
+@FragmentScope
+class TaskAdapter @Inject constructor(
     private val viewModel: ToDoViewModel,
     private val fragment: Fragment,
-    ) : RecyclerView.Adapter<TaskViewHolder>() {
+) : RecyclerView.Adapter<TaskViewHolder>() {
 
     var toDoList: List<ToDoItem> = emptyList()
         set(newValue) {
