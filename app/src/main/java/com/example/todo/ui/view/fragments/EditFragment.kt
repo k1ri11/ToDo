@@ -10,7 +10,9 @@ import com.example.todo.databinding.FragmentEditBinding
 import com.example.todo.ioc.di.fragments.EditFragmentComponent
 import com.example.todo.ioc.di.viewcomponents.EditViewComponent
 import com.example.todo.ui.view.MainActivity
+import com.example.todo.ui.view.NetworkUtils
 import com.example.todo.ui.view.controllers.EditViewController
+import javax.inject.Inject
 
 
 class EditFragment : Fragment() {
@@ -21,12 +23,17 @@ class EditFragment : Fragment() {
     private lateinit var editFragmentComponent: EditFragmentComponent
     private lateinit var editViewComponent: EditViewComponent
     private lateinit var editViewController: EditViewController
+    @Inject
+    lateinit var networkUtils: NetworkUtils
 
     private val args by navArgs<EditFragmentArgs>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        editFragmentComponent = (activity as MainActivity).activityComponent.editFragmentComponent().create(this)
+        val activityComponent = (activity as MainActivity).activityComponent
+        editFragmentComponent = activityComponent.editFragmentComponent().create(this)
+        activityComponent.inject(this)
+        networkUtils = NetworkUtils(requireContext())
     }
 
     override fun onCreateView(

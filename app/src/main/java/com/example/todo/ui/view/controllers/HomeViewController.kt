@@ -8,17 +8,20 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.todo.R
 import com.example.todo.databinding.FragmentHomeBinding
 import com.example.todo.domain.model.ToDoItem
-import com.example.todo.ioc.di.viewcomponents.FragmentViewScope
+import com.example.todo.ioc.di.viewcomponents.HomeFragmentViewScope
 import com.example.todo.ui.stateholders.ToDoViewModel
-import com.example.todo.ui.view.MainActivity
+import com.example.todo.ui.view.NetworkUtils
 import com.example.todo.ui.view.TaskAdapter
+import com.example.todo.ui.view.fragments.HomeFragment
 import com.example.todo.ui.view.fragments.HomeFragmentDirections
 import com.example.todo.utils.Resource
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
 import java.util.*
 import javax.inject.Inject
 
-@FragmentViewScope
+@HomeFragmentViewScope
 class HomeViewController @Inject constructor(
     private val fragment: Fragment,
     private val binding: FragmentHomeBinding,
@@ -30,16 +33,19 @@ class HomeViewController @Inject constructor(
     private var filteredTasks = emptyList<ToDoItem>()
     private var tasksList = emptyList<ToDoItem>()
     private var getAllTasksJob: Job? = null
-    private val activity = fragment.requireActivity() as MainActivity
+    private var connectionState = false
+    private lateinit var networkUtils: NetworkUtils
 
     private var isRefreshing = false
     private var doneCnt = 0
 
 
     fun setupViews() {
+        setupNetworkState()
         getAllTasks()
         setupFilteredTasksObserver()
         setupAllTasksObserver()
+        setupNetworkObserver()
 
         setupFABListener()
         setupRefreshListener()
@@ -48,11 +54,28 @@ class HomeViewController @Inject constructor(
         setupRecycler()
     }
 
+    private fun setupNetworkState() {
+        networkUtils = (fragment as HomeFragment).networkUtils
+        connectionState = networkUtils.hasInternetConnection()
+    }
+
+    private fun setupNetworkObserver() {
+        networkUtils = (fragment as HomeFragment).networkUtils
+        networkUtils.getNetworkLiveData().observe(viewLifecycleOwner) { isConnected ->
+            connectionState = isConnected
+            if (isConnected && tasksList.isNotEmpty()) {
+                saveTaskList()
+            }
+        }
+    }
+
     private fun getAllTasks() {
-        if (activity.isConnected) getAllTasksJob = viewModel.getAllTasks()
-        else {
-            changeLoadingState(false)
-            Toast.makeText(fragment.requireContext(), "Нет интернет соединения", Toast.LENGTH_SHORT).show()}
+        getAllTasksJob = viewModel.getAllTasks(connectionState)
+        changeLoadingState(false)
+        if (!connectionState) {
+            Snackbar.make(binding.refresh, fragment.resources.getString(R.string.no_internet_connection), Snackbar.LENGTH_LONG)
+                .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE).show()
+        }
     }
 
     private fun setupVisibilitySelector() {
@@ -92,8 +115,10 @@ class HomeViewController @Inject constructor(
                     filteredTasks = response.data!!
                 }
                 is Resource.Error -> {
-                    response.message?.let { message -> Toast.makeText(fragment.requireContext(),
-                        "Ошибка: $message", Toast.LENGTH_LONG).show()
+                    response.message?.let { message ->
+                        Toast.makeText(fragment.requireContext(),
+                            fragment.resources.getString(R.string.error).plus(message),
+                            Toast.LENGTH_LONG).show()
                     }
                 }
                 else -> {}
@@ -116,7 +141,8 @@ class HomeViewController @Inject constructor(
                 changeLoadingState(false)
                 response.message?.let { message ->
                     Toast.makeText(fragment.requireContext(),
-                        "Ошибка: $message проведите вниз, чтобы обновить", Toast.LENGTH_LONG).show()
+                        fragment.resources.getString(R.string.error).plus(message)
+                            .plus(R.string.update), Toast.LENGTH_LONG).show()
                 }
             }
             is Resource.Loading -> {
@@ -153,7 +179,7 @@ class HomeViewController @Inject constructor(
     }
 
     fun saveTaskList() {
-        viewModel.saveTaskList(tasksList)
+        viewModel.saveTaskList(tasksList, connectionState)
     }
 
     fun cancelGetAllTasksJob() {

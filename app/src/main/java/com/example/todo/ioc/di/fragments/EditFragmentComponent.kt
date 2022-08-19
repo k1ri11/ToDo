@@ -7,8 +7,10 @@ import com.example.todo.ui.view.TaskAdapter
 import dagger.BindsInstance
 import dagger.Subcomponent
 
+annotation class EditFragmentScope
+
 @Subcomponent
-@FragmentScope
+@EditFragmentScope
 interface EditFragmentComponent {
     val fragment: Fragment
 

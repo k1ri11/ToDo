@@ -8,7 +8,9 @@ import com.example.todo.ui.view.controllers.HomeViewController
 import dagger.BindsInstance
 import dagger.Subcomponent
 
-@FragmentViewScope
+annotation class EditFragmentViewScope
+
+@EditFragmentViewScope
 @Subcomponent
 interface EditViewComponent {
     val root: FragmentEditBinding
