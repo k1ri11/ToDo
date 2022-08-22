@@ -1,10 +1,12 @@
 package com.example.todo.ui.view.controllers
 
 import android.app.DatePickerDialog
+import android.util.TypedValue
 import android.view.View
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.NavHostFragment.Companion.findNavController
@@ -136,21 +138,21 @@ class EditViewController @Inject constructor(
     private fun updateImportanceSection() {
         when (task.importance) {
             is Importance.Low -> {
-                binding.importance.text =  fragment.resources.getString(R.string.low)
-                binding.importance.setTextColor(fragment.requireContext().getColor(R.color.black))
-                binding.importanceIc.visibility = View.INVISIBLE
+                setLowImportance()
             }
             is Importance.High -> {
-                binding.importance.text = fragment.resources.getString(R.string.high)
-                binding.importance.setTextColor(fragment.requireContext().getColor(R.color.Red))
-                binding.importanceIc.visibility = View.VISIBLE
+                setHighImportance()
             }
             is Importance.Basic -> {
-                binding.importance.text = fragment.resources.getString(R.string.No)
-                binding.importance.setTextColor(fragment.requireContext().getColor(R.color.black))
-                binding.importanceIc.visibility = View.INVISIBLE
+                setNoImportance()
             }
         }
+    }
+
+    private fun getTextColor(): Int {
+        val typedValue = TypedValue()
+        fragment.requireContext().theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+        return ContextCompat.getColor(fragment.requireContext(), typedValue.resourceId)
     }
 
     private fun setupListeners(toolbar: MaterialToolbar, popupMenu: PopupMenu) {
@@ -210,12 +212,15 @@ class EditViewController @Inject constructor(
             when (it.itemId) {
                 R.id.imp_no -> {
                     setNoImportance()
+                    task.importance = Importance.Basic
                 }
                 R.id.imp_low -> {
                     setLowImportance()
+                    task.importance = Importance.Low
                 }
                 R.id.imp_high -> {
                     setHighImportance()
+                    task.importance = Importance.High
                 }
             }
             false
@@ -226,22 +231,18 @@ class EditViewController @Inject constructor(
         binding.importance.setTextColor(fragment.requireContext().getColor(R.color.Red))
         binding.importanceIc.visibility = View.VISIBLE
         binding.importance.text = fragment.requireContext().getString(R.string.high)
-        task.importance = Importance.High
     }
 
     private fun setLowImportance() {
-        binding.importance.setTextColor(fragment.requireContext()
-            .getColor(R.color.black))
+        binding.importance.setTextColor(getTextColor())
         binding.importanceIc.visibility = View.GONE
         binding.importance.text = fragment.requireContext().getString(R.string.low)
-        task.importance = Importance.Low
     }
 
     private fun setNoImportance() {
-        binding.importance.setTextColor(fragment.requireContext().getColor(R.color.black))
+        binding.importance.setTextColor(getTextColor())
         binding.importanceIc.visibility = View.GONE
         binding.importance.text = fragment.requireContext().getString(R.string.No)
-        task.importance = Importance.Basic
     }
 
     private fun setupDatePicker() {

@@ -101,6 +101,7 @@ class Repository @Inject constructor(val api: ToDoApi, val database: ToDoDatabas
                 response.body()?.let { body -> revision = body.revision }
             }
         }
+        getAllTasks(hasNetwork)
     }
 
     suspend fun updateTask(task: ToDoItem, hasNetwork: Boolean) {
@@ -109,6 +110,7 @@ class Repository @Inject constructor(val api: ToDoApi, val database: ToDoDatabas
             val tmpTask = SingleTaskUpdate(element = task.toToDoItemRequest())
             api.updateTask(revision = revision, id = task.id, task = tmpTask)
         }
+        getAllTasks(hasNetwork)
     }
 
     suspend fun addTask(task: ToDoItem, hasNetwork: Boolean) {
@@ -117,6 +119,7 @@ class Repository @Inject constructor(val api: ToDoApi, val database: ToDoDatabas
             val tmpTask = SingleTaskUpdate(element = task.toToDoItemRequest())
             api.addTask(task = tmpTask, revision = revision)
         }
+        getAllTasks(hasNetwork)
     }
 
     fun changeItemDone(task: ToDoItem) {

@@ -24,6 +24,10 @@ class ToDoViewModel @Inject constructor(
 
     var doneIsInvisible = false
 
+    init {
+        getAllTasks(true)
+    }
+
     fun getAllTasks(hasNetwork: Boolean) = viewModelScope.launch(Dispatchers.IO) {
         repository.getAllTasks(hasNetwork)
     }

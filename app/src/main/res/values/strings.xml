@@ -18,4 +18,5 @@
     <string name="incorrect_authorization">Неверная авторизация</string>
     <string name="element_not_found">Такой элемент не найден на сервере</string>
     <string name="server_error">Неопознанная ошибка сервера</string>
+    <string name="cancel">Отменить</string>
 </resources>
