@@ -3,6 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/AndroidProjects/ToDo/app/src/main/res/drawable/anumated_numbers.xml" value="0.2205" />
+        <entry key="..\:/AndroidProjects/ToDo/app/src/main/res/drawable/from5_to_4.xml" value="0.2205" />
+        <entry key="..\:/AndroidProjects/ToDo/app/src/main/res/drawable/ic_4.xml" value="0.2205" />
+        <entry key="..\:/AndroidProjects/ToDo/app/src/main/res/drawable/ic_5.xml" value="0.2205" />
         <entry key="..\:/AndroidProjects/ToDo/app/src/main/res/drawable/ic_info.xml" value="0.1435" />
         <entry key="..\:/AndroidProjects/ToDo/app/src/main/res/layout-v28/todo_item.xml" value="0.24818840579710144" />
         <entry key="..\:/AndroidProjects/ToDo/app/src/main/res/layout/activity_main.xml" value="0.24818840579710144" />

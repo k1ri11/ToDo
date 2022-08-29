@@ -1,4 +1,4 @@
-package com.example.todo.ui.view
+package com.example.todo.ui.view.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -7,11 +7,11 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todo.databinding.TodoItemBinding
 import com.example.todo.domain.model.ToDoItem
-import com.example.todo.ioc.di.fragments.FragmentScope
+import com.example.todo.ioc.di.fragments.HomeFragmentScope
 import com.example.todo.ui.stateholders.ToDoViewModel
 import javax.inject.Inject
 
-@FragmentScope
+@HomeFragmentScope
 class TaskAdapter @Inject constructor(
     private val viewModel: ToDoViewModel,
     private val fragment: Fragment,
@@ -27,6 +27,7 @@ class TaskAdapter @Inject constructor(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val binding = TodoItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+
         return TaskViewHolder(binding, viewModel, fragment)
     }
 

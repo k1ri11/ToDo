@@ -6,9 +6,9 @@ import com.example.todo.ui.view.controllers.HomeViewController
 import dagger.BindsInstance
 import dagger.Subcomponent
 
-annotation class FragmentViewScope
+annotation class HomeFragmentViewScope
 
-@FragmentViewScope
+@HomeFragmentViewScope
 @Subcomponent
 interface HomeViewComponent {
     val root: FragmentHomeBinding

@@ -9,7 +9,9 @@ import com.example.todo.databinding.FragmentHomeBinding
 import com.example.todo.ioc.di.fragments.HomeFragmentComponent
 import com.example.todo.ioc.di.viewcomponents.HomeViewComponent
 import com.example.todo.ui.view.MainActivity
+import com.example.todo.ui.view.NetworkUtils
 import com.example.todo.ui.view.controllers.HomeViewController
+import javax.inject.Inject
 
 class HomeFragment : Fragment() {
 
@@ -19,11 +21,15 @@ class HomeFragment : Fragment() {
     private lateinit var homeFragmentComponent: HomeFragmentComponent
     private lateinit var homeViewComponent: HomeViewComponent
     private lateinit var homeViewController: HomeViewController
+    @Inject
+    lateinit var networkUtils: NetworkUtils
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        homeFragmentComponent =
-            (activity as MainActivity).activityComponent.homeFragmentComponent().create(this)
+        val activityComponent = (activity as MainActivity).activityComponent
+        homeFragmentComponent = activityComponent.homeFragmentComponent().create(this)
+        activityComponent.inject(this)
+        networkUtils = NetworkUtils(requireContext())
     }
 
     override fun onCreateView(

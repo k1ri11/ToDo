@@ -24,4 +24,18 @@
     <color name="Back_primary">#F7F6F2</color>
     <color name="Back_secondary">#FFFFFF</color>
     <color name="Back_elevated">#FFFFFF</color>
+
+    <color name="Separator_dark">#33FFFFFF</color>
+    <color name="Overlay_dark">#52000000</color>
+    <color name="Primary_dark">#FFFFFF</color>
+    <color name="Secondary_dark">#99FFFFFF</color>
+    <color name="Tertiary_dark">#66FFFFFF</color>
+    <color name="Disable_dark">#26FFFFFF</color>
+    <color name="Red_dark">#FF453A</color>
+    <color name="Green_dark">#32D74B</color>
+    <color name="Blue_dark">#0A84FF</color>
+    <color name="Gray_light_dark">#48484A</color>
+    <color name="Back_primary_dark">#161618</color>
+    <color name="Back_secondary_dark">#252528</color>
+    <color name="Back_elevated_dark">#3C3C3F</color>
 </resources>
