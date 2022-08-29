@@ -5,12 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todo.data.repository.Repository
 import com.example.todo.domain.model.ToDoItem
+import com.example.todo.ioc.di.ActivityScope
 import com.example.todo.utils.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
+import javax.inject.Inject
 
-class ToDoViewModel(
+@ActivityScope
+class ToDoViewModel @Inject constructor(
     private val repository: Repository,
 ) : ViewModel() {
     val allTasks: LiveData<Resource<List<ToDoItem>>> = repository.allTasks

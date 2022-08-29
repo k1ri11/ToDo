@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.todo.R
 import com.example.todo.databinding.FragmentHomeBinding
 import com.example.todo.domain.model.ToDoItem
+import com.example.todo.ioc.di.viewcomponents.FragmentViewScope
 import com.example.todo.ui.stateholders.ToDoViewModel
 import com.example.todo.ui.view.MainActivity
 import com.example.todo.ui.view.TaskAdapter
@@ -15,8 +16,10 @@ import com.example.todo.ui.view.fragments.HomeFragmentDirections
 import com.example.todo.utils.Resource
 import kotlinx.coroutines.Job
 import java.util.*
+import javax.inject.Inject
 
-class HomeViewController(
+@FragmentViewScope
+class HomeViewController @Inject constructor(
     private val fragment: Fragment,
     private val binding: FragmentHomeBinding,
     private val adapter: TaskAdapter,
@@ -53,6 +56,7 @@ class HomeViewController(
     }
 
     private fun setupVisibilitySelector() {
+        setVisibilityAndListInRecycler(tasksList)
         binding.visibilitySelector.setOnClickListener {
             viewModel.doneIsInvisible = !viewModel.doneIsInvisible
             setVisibilityAndListInRecycler(tasksList)

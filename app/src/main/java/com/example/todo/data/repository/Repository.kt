@@ -2,17 +2,22 @@ package com.example.todo.data.repository
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.todo.data.datasource.network.RetrofitInstance
+import com.example.todo.data.datasource.network.ToDoApi
 import com.example.todo.data.model.Importance
 import com.example.todo.data.model.lists.TasksListUpdate
 import com.example.todo.data.model.mappers.toToDoItem
 import com.example.todo.data.model.mappers.toToDoItemRequest
 import com.example.todo.data.model.singletask.SingleTaskUpdate
 import com.example.todo.domain.model.ToDoItem
+import com.example.todo.ioc.di.ApplicationScope
 import com.example.todo.utils.Resource
 import java.util.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class Repository(private val retrofitInstance: RetrofitInstance) {
+@Singleton
+@ApplicationScope
+class Repository @Inject constructor(val api: ToDoApi) {
     private var revision = 0
 
     private val _allTasks = MutableLiveData<Resource<List<ToDoItem>>>()
@@ -27,7 +32,7 @@ class Repository(private val retrofitInstance: RetrofitInstance) {
 
     suspend fun getAllTasks() {
         _allTasks.postValue(Resource.Loading())
-        val response = retrofitInstance.api.getAllTasks()
+        val response = api.getAllTasks()
         if (response.isSuccessful) {
             response.body()?.let { body ->
                 revision = body.revision
@@ -48,7 +53,7 @@ class Repository(private val retrofitInstance: RetrofitInstance) {
     suspend fun saveTaskList(taskList: List<ToDoItem>) {
         val tmpList = TasksListUpdate(taskList.map { it.toToDoItemRequest() })
         val response =
-            retrofitInstance.api.saveTasksList(revision = revision, tasksList = tmpList)
+            api.saveTasksList(revision = revision, tasksList = tmpList)
         if (response.isSuccessful) {
             response.body()?.let { body ->
                 revision = body.revision
@@ -58,7 +63,7 @@ class Repository(private val retrofitInstance: RetrofitInstance) {
 
     suspend fun getTask(id: UUID) {
         _singleTask.postValue(Resource.Loading())
-        val response = retrofitInstance.api.getTask(id)
+        val response = api.getTask(id)
         if (response.isSuccessful) {
             response.body()?.let { body ->
                 revision = body.revision
@@ -76,7 +81,7 @@ class Repository(private val retrofitInstance: RetrofitInstance) {
 
 
     suspend fun deleteTask(id: UUID) {
-        val response = retrofitInstance.api.deleteTask(id = id, revision = revision)
+        val response = api.deleteTask(id = id, revision = revision)
         if (response.isSuccessful) {
             response.body()?.let { body ->
                 revision = body.revision
@@ -86,12 +91,12 @@ class Repository(private val retrofitInstance: RetrofitInstance) {
 
     suspend fun updateTask(task: ToDoItem) {
         val tmpTask = SingleTaskUpdate(element = task.toToDoItemRequest())
-        retrofitInstance.api.updateTask(revision = revision, id = task.id, task = tmpTask)
+        api.updateTask(revision = revision, id = task.id, task = tmpTask)
     }
 
     suspend fun addTask(task: ToDoItem) {
         val tmpTask = SingleTaskUpdate(element = task.toToDoItemRequest())
-        retrofitInstance.api.addTask(task = tmpTask, revision = revision)
+        api.addTask(task = tmpTask, revision = revision)
     }
 
     fun changeItemDone(task: ToDoItem) {
@@ -99,6 +104,7 @@ class Repository(private val retrofitInstance: RetrofitInstance) {
         tmpTaskList?.data?.let { list ->
             val index = list.indexOf(task)
             list[index].done = !list[index].done
+            list[index].changedAt = Date(System.currentTimeMillis())
             _allTasks.postValue(Resource.Success(list))
             val dataFiltered = list.filter { !it.done }
             _filteredTasks.postValue(Resource.Success(dataFiltered))
