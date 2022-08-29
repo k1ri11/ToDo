@@ -1,10 +1,12 @@
 package com.example.todo.ui.view.controllers
 
 import android.app.DatePickerDialog
+import android.util.TypedValue
 import android.view.View
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.NavHostFragment.Companion.findNavController
@@ -12,14 +14,20 @@ import com.example.todo.R
 import com.example.todo.data.model.Importance
 import com.example.todo.databinding.FragmentEditBinding
 import com.example.todo.domain.model.ToDoItem
+import com.example.todo.ioc.di.viewcomponents.EditFragmentViewScope
 import com.example.todo.ui.stateholders.ToDoViewModel
+import com.example.todo.ui.view.fragments.EditFragment
 import com.example.todo.utils.Resource
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-class EditViewController(
+@EditFragmentViewScope
+class EditViewController @Inject constructor(
     private val fragment: Fragment,
     private val binding: FragmentEditBinding,
     private val viewLifecycleOwner: LifecycleOwner,
@@ -30,12 +38,14 @@ class EditViewController(
     var getTaskJob: Job? = null
     private var isLoading = false
     private var isNewTask = false
+    private var connectionState = false
 
     fun loadTaskAndSetupUI(taskId: UUID, isNew: Boolean) {
         isNewTask = isNew
+        setupNetworkObserver()
 
         if (isNewTask) viewModel.createEmptyTask(taskId)
-        else getTaskJob = viewModel.getTask(taskId)
+        else getTask(taskId)
 
         val toolbar = binding.toolbar
         val popupMenu = PopupMenu(fragment.requireContext(), binding.importanceSection)
@@ -43,6 +53,23 @@ class EditViewController(
 
         setupSingleTaskObserver(toolbar, popupMenu)
         setupToolBarNavigation(toolbar)
+    }
+
+    private fun setupNetworkObserver() {
+        val networkUtils = (fragment as EditFragment).networkUtils
+        connectionState = networkUtils.hasInternetConnection()
+        networkUtils.getNetworkLiveData().observe(viewLifecycleOwner) { isConnected ->
+            connectionState = isConnected
+        }
+    }
+
+    private fun getTask(taskId: UUID) {
+        getTaskJob = viewModel.getTask(taskId, connectionState)
+        changeLoadingState(false)
+        if (!connectionState) {
+            Snackbar.make(binding.deleteSection, fragment.resources.getString(R.string.no_internet_connection), Snackbar.LENGTH_LONG)
+                .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE).show()
+        }
     }
 
     private fun setupToolBarNavigation(toolbar: MaterialToolbar) {
@@ -63,7 +90,7 @@ class EditViewController(
                     changeLoadingState(false)
                     response.message?.let { message ->
                         Toast.makeText(fragment.requireContext(),
-                            "Ошибка: $message",
+                            fragment.resources.getString(R.string.error).plus(message),
                             Toast.LENGTH_LONG).show()
                     }
                 }
@@ -88,33 +115,44 @@ class EditViewController(
     }
 
     private fun updateUI() {
-//        todo разобраться с новой задачей
-        if (task.text.isNotEmpty()) {
-            binding.editText.setText(task.text, TextView.BufferType.EDITABLE)
-            binding.deleteSection.visibility = View.VISIBLE
-        }
+        binding.editText.setText(task.text, TextView.BufferType.EDITABLE)
+        if (!isNewTask) binding.deleteSection.visibility = View.VISIBLE
+
         updateImportanceSection()
         updateDeadlineSection()
     }
 
     private fun updateDeadlineSection() {
-        task.deadLine?.let {
+        val deadLine = task.deadLine
+        if (deadLine != null) {
             binding.swich.isChecked = true
-            binding.deadlineDate.text = dateToString(it)
+            binding.deadlineDate.text = dateToString(deadLine)
             binding.deadlineDate.visibility = View.VISIBLE
+        } else {
+            binding.swich.isChecked = false
+            binding.deadlineDate.text = ""
+            binding.deadlineDate.visibility = View.INVISIBLE
         }
     }
 
     private fun updateImportanceSection() {
         when (task.importance) {
-            is Importance.Low -> binding.importance.text = "Низкий"
-            is Importance.High -> {
-                binding.importance.text = "Высокий"
-                binding.importance.setTextColor(fragment.requireContext().getColor(R.color.Red))
-                binding.importanceIc.visibility = View.VISIBLE
+            is Importance.Low -> {
+                setLowImportance()
             }
-            is Importance.Basic -> binding.importance.text = "Нет"
+            is Importance.High -> {
+                setHighImportance()
+            }
+            is Importance.Basic -> {
+                setNoImportance()
+            }
         }
+    }
+
+    private fun getTextColor(): Int {
+        val typedValue = TypedValue()
+        fragment.requireContext().theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+        return ContextCompat.getColor(fragment.requireContext(), typedValue.resourceId)
     }
 
     private fun setupListeners(toolbar: MaterialToolbar, popupMenu: PopupMenu) {
@@ -123,12 +161,11 @@ class EditViewController(
         setupPopupListener(popupMenu)
         setupDatePicker()
         setupDeleteListener()
-
     }
 
     private fun setupDeleteListener() {
         binding.deleteSection.setOnClickListener {
-            viewModel.deleteTask(task.id)
+            deleteTask()
             findNavController(fragment).navigate(R.id.editFr_to_homeFr)
         }
     }
@@ -150,7 +187,7 @@ class EditViewController(
             saveTask()
             findNavController(fragment).navigate(R.id.editFr_to_homeFr)
         } else {
-            Toast.makeText(fragment.requireContext(), "Введите текст задачи",
+            Toast.makeText(fragment.requireContext(), fragment.resources.getString(R.string.enter_task_text),
                 Toast.LENGTH_SHORT).show()
         }
     }
@@ -158,7 +195,7 @@ class EditViewController(
     private fun setupSwichListener() {
         binding.swich.setOnClickListener {
             if (binding.swich.isChecked) {
-                binding.deadlineDate.text = "Выберите дату"
+                binding.deadlineDate.text =  fragment.resources.getString(R.string.enter_date)
                 binding.deadlineDate.visibility = View.VISIBLE
             } else {
                 binding.deadlineDate.visibility = View.INVISIBLE
@@ -175,12 +212,15 @@ class EditViewController(
             when (it.itemId) {
                 R.id.imp_no -> {
                     setNoImportance()
+                    task.importance = Importance.Basic
                 }
                 R.id.imp_low -> {
                     setLowImportance()
+                    task.importance = Importance.Low
                 }
                 R.id.imp_high -> {
                     setHighImportance()
+                    task.importance = Importance.High
                 }
             }
             false
@@ -191,22 +231,18 @@ class EditViewController(
         binding.importance.setTextColor(fragment.requireContext().getColor(R.color.Red))
         binding.importanceIc.visibility = View.VISIBLE
         binding.importance.text = fragment.requireContext().getString(R.string.high)
-        task.importance = Importance.High
     }
 
     private fun setLowImportance() {
-        binding.importance.setTextColor(fragment.requireContext()
-            .getColor(R.color.black))
+        binding.importance.setTextColor(getTextColor())
         binding.importanceIc.visibility = View.GONE
         binding.importance.text = fragment.requireContext().getString(R.string.low)
-        task.importance = Importance.Low
     }
 
     private fun setNoImportance() {
-        binding.importance.setTextColor(fragment.requireContext().getColor(R.color.black))
+        binding.importance.setTextColor(getTextColor())
         binding.importanceIc.visibility = View.GONE
         binding.importance.text = fragment.requireContext().getString(R.string.No)
-        task.importance = Importance.Basic
     }
 
     private fun setupDatePicker() {
@@ -236,12 +272,16 @@ class EditViewController(
         return dateFormat.format(date)
     }
 
-    fun saveTask() {
-        if (isNewTask) viewModel.addTask(task)
-        else viewModel.updateTask(task)
+    private fun saveTask() {
+        if (isNewTask) viewModel.addTask(task, connectionState)
+        else viewModel.updateTask(task, connectionState)
     }
 
     fun cancelGetSingleTaskJob() {
         getTaskJob?.cancel()
+    }
+
+    private fun deleteTask() {
+        viewModel.deleteTask(task, connectionState)
     }
 }

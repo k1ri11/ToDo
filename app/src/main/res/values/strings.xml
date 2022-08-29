@@ -9,4 +9,14 @@
     <string name="No">Нет</string>
     <string name="low">Низкий</string>
     <string name="high">Высокий</string>
+    <string name="error">Ошибка: </string>
+    <string name="no_internet_connection">Нет интернет соединения</string>
+    <string name="enter_task_text">Введите текст задачи</string>
+    <string name="enter_date">Выберите дату</string>
+    <string name="update">проведите вниз, чтобы обновить</string>
+    <string name="incorrect_request">Неправильно сформирован запрос</string>
+    <string name="incorrect_authorization">Неверная авторизация</string>
+    <string name="element_not_found">Такой элемент не найден на сервере</string>
+    <string name="server_error">Неопознанная ошибка сервера</string>
+    <string name="cancel">Отменить</string>
 </resources>

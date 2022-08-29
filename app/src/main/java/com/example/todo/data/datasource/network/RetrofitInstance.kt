@@ -1,6 +1,9 @@
 package com.example.todo.data.datasource.network
 
+import com.example.todo.ioc.di.ApplicationScope
 import com.example.todo.utils.Constants
+import dagger.Module
+import dagger.Provides
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -8,7 +11,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-
+@ApplicationScope
+@Module
 object RetrofitInstance {
 
     var client1: OkHttpClient = OkHttpClient.Builder().addInterceptor(Interceptor { chain ->
@@ -32,7 +36,8 @@ object RetrofitInstance {
             .build()
     }
 
-    val api by lazy {
-        retrofit.create(ToDoApi::class.java)
+    @Provides
+    fun getToDoApi(): ToDoApi {
+        return retrofit.create(ToDoApi::class.java)
     }
 }
