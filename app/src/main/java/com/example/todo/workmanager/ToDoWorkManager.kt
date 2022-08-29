@@ -1,22 +1,11 @@
 package com.example.todo.workmanager
 
 import android.content.Context
-import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.LiveData
 import androidx.work.*
 import com.example.todo.R
 import com.example.todo.data.datasource.network.RetrofitInstance
-import com.example.todo.data.model.ToDoItemRequest
-import com.example.todo.data.model.mappers.toToDoItem
-import com.example.todo.data.repository.Repository
-import com.example.todo.ioc.di.AppComponent
-import com.google.common.util.concurrent.ListenableFuture
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import kotlin.random.Random
 
 class ToDoWorkManager(
@@ -70,6 +59,7 @@ class ToDoWorkManager(
 
         private const val WORK_NAME = "todo_workManager"
         fun Context.startWorker() {
+
             val workManager = WorkManager.getInstance(this)
             val request = createPeriodicRequest()
             workManager.enqueueUniquePeriodicWork(

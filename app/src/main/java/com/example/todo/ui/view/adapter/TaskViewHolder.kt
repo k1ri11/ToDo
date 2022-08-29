@@ -34,7 +34,7 @@ class TaskViewHolder(
 
     private fun setupOnCheckBoxClickListener(currentItem: ToDoItem) {
         binding.itemCb.setOnClickListener {
-            viewModel.changeItemDone(currentItem)
+            viewModel.updateTask(currentItem.copy(done=!currentItem.done))
         }
     }
 

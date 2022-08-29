@@ -4,7 +4,6 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
-import android.util.Log
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -18,10 +17,8 @@ import com.example.todo.databinding.FragmentHomeBinding
 import com.example.todo.domain.model.ToDoItem
 import com.example.todo.ioc.di.viewcomponents.HomeFragmentViewScope
 import com.example.todo.ui.stateholders.ToDoViewModel
-import com.example.todo.ui.view.NetworkUtils
 import com.example.todo.ui.view.adapter.SwipeToDeleteCallback
 import com.example.todo.ui.view.adapter.TaskAdapter
-import com.example.todo.ui.view.fragments.HomeFragment
 import com.example.todo.ui.view.fragments.HomeFragmentDirections
 import com.example.todo.utils.Resource
 import com.google.android.material.snackbar.BaseTransientBottomBar
@@ -43,8 +40,6 @@ class HomeViewController @Inject constructor(
     private var filteredTasks = emptyList<ToDoItem>()
     private var tasksList = emptyList<ToDoItem>()
     private var getAllTasksJob: Job? = null
-    private var connectionState = false
-    private lateinit var networkUtils: NetworkUtils
 
     private var isRefreshing = false
     private var animationNeeded = false
@@ -52,10 +47,8 @@ class HomeViewController @Inject constructor(
 
 
     fun setupViews() {
-        setupNetworkState()
         setupFilteredTasksObserver()
         setupAllTasksObserver()
-        setupNetworkObserver()
 
         setupFABListener()
         setupRefreshListener()
@@ -69,7 +62,7 @@ class HomeViewController @Inject constructor(
         val simpleCallback = object : SwipeToDeleteCallback(fragment.requireContext()) {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val deletedTask = adapter.toDoList[viewHolder.absoluteAdapterPosition]
-                viewModel.deleteTask(deletedTask, connectionState)
+                viewModel.deleteTask(deletedTask)
 
                 val str = buildSpannableString(deletedTask)
                 makeSnackbar(str, deletedTask)
@@ -84,7 +77,7 @@ class HomeViewController @Inject constructor(
             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
             .setTextMaxLines(1)
             .setAction(fragment.resources.getString(R.string.cancel)) {
-                viewModel.addTask(deletedTask, connectionState)
+                viewModel.addTask(deletedTask)
             }.show()
     }
 
@@ -97,30 +90,10 @@ class HomeViewController @Inject constructor(
         return builder
     }
 
-    private fun setupNetworkState() {
-        networkUtils = (fragment as HomeFragment).networkUtils
-        connectionState = networkUtils.hasInternetConnection()
-    }
-
-    private fun setupNetworkObserver() {
-        networkUtils = (fragment as HomeFragment).networkUtils
-        networkUtils.getNetworkLiveData().observe(viewLifecycleOwner) { isConnected ->
-            connectionState = isConnected
-            if (isConnected && tasksList.isNotEmpty()) {
-                saveTaskList()
-            }
-        }
-    }
 
     private fun getAllTasks() {
-        getAllTasksJob = viewModel.getAllTasks(connectionState)
+        getAllTasksJob = viewModel.getAllTasks()
         changeLoadingState(false)
-        if (!connectionState) {
-            Snackbar.make(binding.refresh,
-                fragment.resources.getString(R.string.no_internet_connection),
-                Snackbar.LENGTH_LONG)
-                .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE).show()
-        }
     }
 
     private fun setupVisibilitySelector() {
@@ -267,7 +240,7 @@ class HomeViewController @Inject constructor(
     }
 
     fun saveTaskList() {
-        viewModel.saveTaskList(tasksList, connectionState)
+        viewModel.saveTaskList(tasksList)
     }
 
     fun cancelGetAllTasksJob() {
