@@ -57,10 +57,4 @@ class ToDoViewModel @Inject constructor(
             repository.createEmptyTask(taskId)
         }
     }
-
-    fun changeItemDone(currentItem: ToDoItem) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.changeItemDone(currentItem)
-        }
-    }
 }

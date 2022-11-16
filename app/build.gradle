@@ -41,12 +41,8 @@ android {
             returnDefaultValues = true
         }
     }
-//    useLibrary 'android.test.mock'
 }
 
-//tasks.withType(Test) {
-//    useJUnitPlatform()
-//}
 
 dependencies {
 

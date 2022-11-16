@@ -160,7 +160,7 @@ class HomeViewController @Inject constructor(
                 response.message?.let { message ->
                     Toast.makeText(fragment.requireContext(),
                         fragment.resources.getString(R.string.error).plus(message)
-                            .plus(R.string.update), Toast.LENGTH_LONG).show()
+                            .plus(" ${fragment.requireContext().resources.getString(R.string.update)}"), Toast.LENGTH_LONG).show()
                 }
             }
             is Resource.Loading -> {
