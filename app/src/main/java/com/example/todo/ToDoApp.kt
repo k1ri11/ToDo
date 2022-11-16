@@ -5,13 +5,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import android.util.Log
+import androidx.work.Configuration
 import com.example.todo.ioc.di.AppComponent
 import com.example.todo.ioc.di.DaggerAppComponent
 import com.example.todo.workmanager.ToDoWorkManager.Companion.startWorker
 
 
-class ToDoApp : Application() {
+class ToDoApp : Application(), Configuration.Provider {
 
     lateinit var appComponent: AppComponent
 
@@ -37,4 +37,8 @@ class ToDoApp : Application() {
             notificationManager.createNotificationChannel(channel)
         }
     }
+
+    override fun getWorkManagerConfiguration() = Configuration.Builder()
+        .setMinimumLoggingLevel(android.util.Log.INFO)
+        .build()
 }

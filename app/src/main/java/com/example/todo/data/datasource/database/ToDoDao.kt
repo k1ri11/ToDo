@@ -1,6 +1,5 @@
 package com.example.todo.data.datasource.database
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.todo.domain.model.ToDoItem
 import java.util.*
@@ -13,11 +12,8 @@ interface ToDoDao {
     @Query("SELECT * FROM todo_items WHERE todo_items.done = 0")
     suspend fun getFilteredTasks(): List<ToDoItem>
 
-    @Transaction
-    suspend fun saveTasksList(tasks: List<ToDoItem>){
-        deleteAllTasks()
-        insertAllTasks(tasks)
-    }
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveTasksList(tasks: List<ToDoItem>)
 
     @Query("SELECT * FROM todo_items WHERE todo_items.id = :taskId ")
     suspend fun getTask(taskId: UUID): ToDoItem
@@ -30,10 +26,4 @@ interface ToDoDao {
 
     @Delete
     suspend fun deleteTask(task: ToDoItem)
-
-    @Query("DELETE FROM todo_items")
-    suspend fun deleteAllTasks()
-
-    @Insert
-    suspend fun insertAllTasks(tasks: List<ToDoItem>)
 }

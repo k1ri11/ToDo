@@ -3,7 +3,7 @@ package com.example.todo.ioc.di
 import com.example.todo.ioc.di.fragments.EditFragmentComponent
 import com.example.todo.ioc.di.fragments.HomeFragmentComponent
 import com.example.todo.ui.stateholders.ToDoViewModel
-import com.example.todo.ui.view.NetworkUtils
+import com.example.todo.ui.view.NetworkUtilsImpl
 import com.example.todo.ui.view.fragments.EditFragment
 import com.example.todo.ui.view.fragments.HomeFragment
 import dagger.BindsInstance
@@ -15,10 +15,7 @@ annotation class ActivityScope
 @ActivityScope
 interface ActivityComponent {
     var viewModel: ToDoViewModel
-    val networkUtils: NetworkUtils
-
-    fun inject(homeFragment: HomeFragment)
-    fun inject(editFragment: EditFragment)
+    val networkUtils: NetworkUtilsImpl
 
     fun homeFragmentComponent(): HomeFragmentComponent.Factory
     fun editFragmentComponent(): EditFragmentComponent.Factory

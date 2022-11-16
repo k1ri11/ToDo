@@ -25,31 +25,31 @@ class ToDoViewModel @Inject constructor(
     var doneIsInvisible = false
 
     init {
-        getAllTasks(true)
+        getAllTasks()
     }
 
-    fun getAllTasks(hasNetwork: Boolean) = viewModelScope.launch(Dispatchers.IO) {
-        repository.getAllTasks(hasNetwork)
+    fun getAllTasks() = viewModelScope.launch(Dispatchers.IO) {
+        repository.getAllTasks()
     }
 
-    fun getTask(id: UUID, hasNetwork: Boolean) = viewModelScope.launch(Dispatchers.IO) {
-        repository.getTask(id, hasNetwork)
+    fun getTask(id: UUID) = viewModelScope.launch(Dispatchers.IO) {
+        repository.getTask(id)
     }
 
-    fun deleteTask(task: ToDoItem, hasNetwork: Boolean) = viewModelScope.launch(Dispatchers.IO) {
-        repository.deleteTask(task, hasNetwork)
+    fun deleteTask(task: ToDoItem) = viewModelScope.launch(Dispatchers.IO) {
+        repository.deleteTask(task)
     }
 
-    fun saveTaskList(taskList: List<ToDoItem>, hasNetwork: Boolean) = viewModelScope.launch(Dispatchers.IO) {
-            repository.saveTaskList(taskList, hasNetwork)
+    fun saveTaskList(taskList: List<ToDoItem>) = viewModelScope.launch(Dispatchers.IO) {
+            repository.saveTaskList(taskList)
         }
 
-    fun updateTask(task: ToDoItem, hasNetwork: Boolean) = viewModelScope.launch(Dispatchers.IO) {
-        repository.updateTask(task, hasNetwork)
+    fun updateTask(task: ToDoItem) = viewModelScope.launch(Dispatchers.IO) {
+        repository.updateTask(task)
     }
 
-    fun addTask(task: ToDoItem, hasNetwork: Boolean) = viewModelScope.launch(Dispatchers.IO) {
-        repository.addTask(task, hasNetwork)
+    fun addTask(task: ToDoItem) = viewModelScope.launch(Dispatchers.IO) {
+        repository.addTask(task)
     }
 
     fun createEmptyTask(taskId: UUID) {

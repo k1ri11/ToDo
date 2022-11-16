@@ -1,12 +1,11 @@
 package com.example.todo.data.repository
 
 import android.content.Context
-import android.util.Log
+import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.todo.R
 import com.example.todo.data.datasource.database.ToDoDao
-import com.example.todo.data.datasource.database.ToDoDatabase
 import com.example.todo.data.datasource.network.ToDoApi
 import com.example.todo.data.model.Importance
 import com.example.todo.data.model.lists.TasksListUpdate
@@ -15,17 +14,23 @@ import com.example.todo.data.model.mappers.toToDoItemRequest
 import com.example.todo.data.model.singletask.SingleTaskUpdate
 import com.example.todo.domain.model.ToDoItem
 import com.example.todo.ioc.di.ApplicationScope
+import com.example.todo.ui.view.NetworkUtils
 import com.example.todo.utils.Resource
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
-import javax.inject.Singleton
 
 @ApplicationScope
-class Repository @Inject constructor(val api: ToDoApi, val database: ToDoDatabase, val context: Context) {
+class Repository @Inject constructor(
+    private val api: ToDoApi,
+    private val dao: ToDoDao,
+    val context: Context,
+    private val networkUtils: NetworkUtils,
+) {
 
-    private var revision = 0
-    private val dao = database.cityDao()
+    private val prefs = context.getSharedPreferences("storage", Context.MODE_PRIVATE)
 
     private val _allTasks = MutableLiveData<Resource<List<ToDoItem>>>()
     val allTasks: LiveData<Resource<List<ToDoItem>>> = _allTasks
@@ -33,17 +38,46 @@ class Repository @Inject constructor(val api: ToDoApi, val database: ToDoDatabas
     private val _filteredTasks = MutableLiveData<Resource<List<ToDoItem>>>()
     val filteredTasks: LiveData<Resource<List<ToDoItem>>> = _filteredTasks
 
-
     private val _singleTask = MutableLiveData<Resource<ToDoItem>>()
     val singleTask: LiveData<Resource<ToDoItem>> = _singleTask
 
-    suspend fun getAllTasks(hasNetwork: Boolean) {
+    private var connectionState = networkUtils.hasInternetConnection()
+
+    init {
+        setupObserver()
+    }
+
+    private fun updateRevision(revision: Int){
+        prefs.edit {
+            putInt("revision", revision)
+        }
+    }
+
+    private fun getRevision(): Int{
+        return prefs.getInt("revision", 0)
+    }
+
+    private fun setupObserver() {
+        networkUtils.getNetworkLiveData().observeForever { isConnected ->
+            if (isConnected && !connectionState) {
+                connectionState = isConnected
+                CoroutineScope(Dispatchers.IO).launch {
+                    allTasks.value?.data?.let { saveTaskList(it) }
+                }
+            }
+            if (!isConnected) {
+                connectionState = isConnected
+            }
+        }
+    }
+
+    suspend fun getAllTasks() {
         _allTasks.postValue(Resource.Loading())
-        if (hasNetwork) {
+        if (networkUtils.hasInternetConnection()) {
             val response = api.getAllTasks()
             if (response.isSuccessful) {
                 response.body()?.let { body ->
-                    revision = body.revision
+                    updateRevision(body.revision)
                     val loadedData = body.list.map { it.toToDoItem() }
                     dao.saveTasksList(loadedData)
                 }
@@ -54,72 +88,76 @@ class Repository @Inject constructor(val api: ToDoApi, val database: ToDoDatabas
                 404 -> _allTasks.postValue(Resource.Error(context.resources.getString(R.string.element_not_found)))
                 500 -> _allTasks.postValue(Resource.Error(context.resources.getString(R.string.server_error)))
             }
+        } else {
+            _allTasks.postValue(Resource.Error(context.resources.getString(R.string.no_internet_connection)))
         }
         _allTasks.postValue(Resource.Success(dao.getAllTasks()))
         _filteredTasks.postValue(Resource.Success(dao.getFilteredTasks()))
     }
 
-    suspend fun saveTaskList(taskList: List<ToDoItem>, hasNetwork: Boolean) {
+    suspend fun saveTaskList(taskList: List<ToDoItem>) {
         dao.saveTasksList(taskList)
-        if (hasNetwork) {
+        if (networkUtils.hasInternetConnection()) {
             val tmpList = TasksListUpdate(taskList.map { it.toToDoItemRequest() })
-            val response = api.saveTasksList(revision = revision, tasksList = tmpList)
+            val response = api.saveTasksList(revision = getRevision(), tasksList = tmpList)
             if (response.isSuccessful) {
-                response.body()?.let { body -> revision = body.revision }
+                response.body()?.let { body -> updateRevision(body.revision)}
             }
         }
     }
 
-    suspend fun getTask(id: UUID, hasNetwork: Boolean) {
+    suspend fun getTask(id: UUID) {
         _singleTask.postValue(Resource.Loading())
-        if (hasNetwork) {
+        if (networkUtils.hasInternetConnection()) {
             val response = api.getTask(id)
             if (response.isSuccessful) {
                 response.body()?.let { body ->
-                    revision = body.revision
+                    updateRevision(body.revision)
                     val loadedData = body.element.toToDoItem()
                     dao.updateTask(loadedData)
                 }
             } else {
                 when (response.code()) {
-                    400 -> _allTasks.postValue(Resource.Error(context.resources.getString(R.string.incorrect_request)))
-                    401 -> _allTasks.postValue(Resource.Error(context.resources.getString(R.string.incorrect_authorization)))
-                    404 -> _allTasks.postValue(Resource.Error(context.resources.getString(R.string.element_not_found)))
-                    else -> _allTasks.postValue(Resource.Error(context.resources.getString(R.string.server_error)))
+                    400 -> _singleTask.postValue(Resource.Error(context.resources.getString(R.string.incorrect_request)))
+                    401 -> _singleTask.postValue(Resource.Error(context.resources.getString(R.string.incorrect_authorization)))
+                    404 -> _singleTask.postValue(Resource.Error(context.resources.getString(R.string.element_not_found)))
+                    else -> _singleTask.postValue(Resource.Error(context.resources.getString(R.string.server_error)))
                 }
             }
+        } else {
+            _singleTask.postValue(Resource.Error(context.resources.getString(R.string.no_internet_connection)))
         }
         _singleTask.postValue(Resource.Success(dao.getTask(id)))
     }
 
 
-    suspend fun deleteTask(task: ToDoItem, hasNetwork: Boolean) {
+    suspend fun deleteTask(task: ToDoItem) {
         dao.deleteTask(task)
-        if (hasNetwork) {
-            val response = api.deleteTask(id = task.id, revision = revision)
+        if (networkUtils.hasInternetConnection()) {
+            val response = api.deleteTask(id = task.id, revision = getRevision())
             if (response.isSuccessful) {
-                response.body()?.let { body -> revision = body.revision }
+                response.body()?.let { body -> updateRevision(body.revision) }
             }
         }
-        getAllTasks(hasNetwork)
+        getAllTasks()
     }
 
-    suspend fun updateTask(task: ToDoItem, hasNetwork: Boolean) {
+    suspend fun updateTask(task: ToDoItem) {
         dao.updateTask(task)
-        if (hasNetwork) {
+        if (networkUtils.hasInternetConnection()) {
             val tmpTask = SingleTaskUpdate(element = task.toToDoItemRequest())
-            api.updateTask(revision = revision, id = task.id, task = tmpTask)
+            api.updateTask(revision = getRevision(), id = task.id, task = tmpTask)
         }
-        getAllTasks(hasNetwork)
+        getAllTasks()
     }
 
-    suspend fun addTask(task: ToDoItem, hasNetwork: Boolean) {
+    suspend fun addTask(task: ToDoItem) {
         dao.addTask(task)
-        if (hasNetwork) {
+        if (networkUtils.hasInternetConnection()) {
             val tmpTask = SingleTaskUpdate(element = task.toToDoItemRequest())
-            api.addTask(task = tmpTask, revision = revision)
+            api.addTask(task = tmpTask, revision = getRevision())
         }
-        getAllTasks(hasNetwork)
+        getAllTasks()
     }
 
     fun changeItemDone(task: ToDoItem) {

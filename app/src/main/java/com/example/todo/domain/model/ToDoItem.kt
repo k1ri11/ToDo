@@ -11,9 +11,7 @@ import java.util.*
     tableName = "todo_items"
 )
 data class ToDoItem(
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "room_id")
-    val roomId: Int? = null,
+    @PrimaryKey()
     @ColumnInfo(name = "id")
     val id: UUID,
     @ColumnInfo(name = "text")

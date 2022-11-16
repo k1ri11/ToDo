@@ -11,7 +11,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@Module
 @Database(
     entities = [ToDoItem::class],
     version = 1
@@ -20,26 +19,5 @@ import javax.inject.Singleton
 abstract class ToDoDatabase : RoomDatabase() {
 
 
-    abstract fun cityDao(): ToDoDao
-
-    companion object {
-        private var INSTANCE: ToDoDatabase? = null
-
-        @Provides
-        fun getToDoDatabase (context: Context): ToDoDatabase {
-            val tempInstance = INSTANCE
-            if (tempInstance != null) {
-                return tempInstance
-            }
-            synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    ToDoDatabase::class.java,
-                    "todo_database"
-                ).build()
-                INSTANCE = instance
-                return instance
-            }
-        }
-    }
+    abstract fun toDoDao(): ToDoDao
 }

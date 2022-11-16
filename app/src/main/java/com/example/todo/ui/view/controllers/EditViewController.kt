@@ -16,11 +16,8 @@ import com.example.todo.databinding.FragmentEditBinding
 import com.example.todo.domain.model.ToDoItem
 import com.example.todo.ioc.di.viewcomponents.EditFragmentViewScope
 import com.example.todo.ui.stateholders.ToDoViewModel
-import com.example.todo.ui.view.fragments.EditFragment
 import com.example.todo.utils.Resource
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.snackbar.BaseTransientBottomBar
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,14 +32,12 @@ class EditViewController @Inject constructor(
 ) {
 
     private lateinit var task: ToDoItem
-    var getTaskJob: Job? = null
+    private var getTaskJob: Job? = null
     private var isLoading = false
     private var isNewTask = false
-    private var connectionState = false
 
     fun loadTaskAndSetupUI(taskId: UUID, isNew: Boolean) {
         isNewTask = isNew
-        setupNetworkObserver()
 
         if (isNewTask) viewModel.createEmptyTask(taskId)
         else getTask(taskId)
@@ -55,21 +50,9 @@ class EditViewController @Inject constructor(
         setupToolBarNavigation(toolbar)
     }
 
-    private fun setupNetworkObserver() {
-        val networkUtils = (fragment as EditFragment).networkUtils
-        connectionState = networkUtils.hasInternetConnection()
-        networkUtils.getNetworkLiveData().observe(viewLifecycleOwner) { isConnected ->
-            connectionState = isConnected
-        }
-    }
-
     private fun getTask(taskId: UUID) {
-        getTaskJob = viewModel.getTask(taskId, connectionState)
+        getTaskJob = viewModel.getTask(taskId)
         changeLoadingState(false)
-        if (!connectionState) {
-            Snackbar.make(binding.deleteSection, fragment.resources.getString(R.string.no_internet_connection), Snackbar.LENGTH_LONG)
-                .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE).show()
-        }
     }
 
     private fun setupToolBarNavigation(toolbar: MaterialToolbar) {
@@ -273,8 +256,8 @@ class EditViewController @Inject constructor(
     }
 
     private fun saveTask() {
-        if (isNewTask) viewModel.addTask(task, connectionState)
-        else viewModel.updateTask(task, connectionState)
+        if (isNewTask) viewModel.addTask(task)
+        else viewModel.updateTask(task)
     }
 
     fun cancelGetSingleTaskJob() {
@@ -282,6 +265,6 @@ class EditViewController @Inject constructor(
     }
 
     private fun deleteTask() {
-        viewModel.deleteTask(task, connectionState)
+        viewModel.deleteTask(task)
     }
 }

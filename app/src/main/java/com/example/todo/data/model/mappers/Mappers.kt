@@ -1,9 +1,8 @@
 package com.example.todo.data.model.mappers
 
-import android.graphics.Color
 import com.example.todo.data.model.Importance
-import com.example.todo.domain.model.ToDoItem
 import com.example.todo.data.model.ToDoItemRequest
+import com.example.todo.domain.model.ToDoItem
 import java.util.*
 
 fun ToDoItem.toToDoItemRequest(): ToDoItemRequest {
@@ -17,7 +16,7 @@ fun ToDoItem.toToDoItemRequest(): ToDoItemRequest {
         },
         deadLine = deadLine?.time,
         done = done,
-        color = "#000000",
+        color = color?.toString(),
         createdAt = createdAt.time,
         changedAt = changedAt.time,
         lastUpdatedBy = "1"
@@ -36,7 +35,7 @@ fun ToDoItemRequest.toToDoItem(): ToDoItem {
         },
         deadLine = deadLine?.let { Date(it) },
         done = done,
-        color = Color.parseColor(color),
+        color = color?.toInt(),
         createdAt = Date(createdAt),
         changedAt = Date(changedAt),
     )
